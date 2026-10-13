@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}{{ tenant.full_name }} ({{ tenant.tenant_number }}) - RHMS{% endblock %}
+{% block page_title %}Tenant Details{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'rental_create' %}?tenant={{ tenant.pk }}" class="btn btn-primary">+ Create Agreement</a>
+<a href="{% url 'tenant_update' tenant.pk %}" class="btn btn-secondary">Edit Tenant</a>
+{% if user.is_superuser %}
+<a href="{% url 'tenant_delete' tenant.pk %}" class="btn btn-danger">Delete Tenant</a>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <div>
+      <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">{{ tenant.tenant_number }}</span>
+      <h2 style="margin-top: 2px;">{{ tenant.full_name }}</h2>
+    </div>
+    {% if tenant.has_active_rentals %}
+      <span class="badge badge-active">Active Tenant</span>
+    {% else %}
+      <span class="badge badge-secondary">No Active Rentals</span>
+    {% endif %}
+  </div>
+  <div class="card-body">
+    <div class="detail-grid">
+      <div class="detail-item">
+        <span class="detail-label">Phone</span>
+        <span class="detail-value highlight">{{ tenant.phone }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Email</span>
+        <span class="detail-value">{{ tenant.email|default:"Not provided" }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Address</span>
+        <span class="detail-value">{{ tenant.address|default:"Not provided" }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Identification No.</span>
+        <span class="detail-value">
+          {% if user.is_staff or user.is_superuser %}
+            {{ tenant.identification_number|default:"Not provided" }}
+          {% else %}
+            {% if tenant.identification_number %}***Confidential***{% else %}Not provided{% endif %}
+          {% endif %}
+        </span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Registration Date</span>
+        <span class="detail-value">{{ tenant.created_at|date:"M d, Y" }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Active Rental Agreements -->
+<div class="card">
+  <div class="card-header">
+    <h3>Active Rentals ({{ active_rentals.count }})</h3>
+  </div>
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Rental No.</th>
+          <th>Property</th>
+          <th>Monthly Rent</th>
+          <th>Start Date</th>
+          <th>Outstanding</th>
+          <th style="text-align: right;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for rent in active_rentals %}
+        <tr>
+          <td><a href="{% url 'rental_detail' rent.pk %}"><strong>{{ rent.rental_number }}</strong></a></td>
+          <td><a href="{% url 'property_detail' rent.property.pk %}">{{ rent.property.name }}</a></td>
+          <td>${{ rent.monthly_rent }}</td>
+          <td>{{ rent.start_date|date:"d/m/Y" }}</td>
+          <td style="font-weight: 700; color: {% if rent.outstanding_balance > 0 %}var(--red){% else %}var(--green){% endif %};">
+            ${{ rent.outstanding_balance }}
+          </td>
+          <td style="text-align: right;">
+            <a href="{% url 'rental_detail' rent.pk %}" class="btn btn-secondary btn-sm">Manage &rarr;</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">
+            This tenant currently has no active rental agreements.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Complete Rental History -->
+<div class="card">
+  <div class="card-header">
+    <h3>Complete Rental History ({{ all_rentals.count }})</h3>
+  </div>
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Rental No.</th>
+          <th>Property</th>
+          <th>Period</th>
+          <th>Monthly Rent</th>
+          <th>Status</th>
+          <th style="text-align: right;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for rent in all_rentals %}
+        <tr>
+          <td><a href="{% url 'rental_detail' rent.pk %}"><strong>{{ rent.rental_number }}</strong></a></td>
+          <td><a href="{% url 'property_detail' rent.property.pk %}">{{ rent.property.name }}</a></td>
+          <td>{{ rent.start_date|date:"d/m/Y" }} - {{ rent.end_date|date:"d/m/Y"|default:"Open" }}</td>
+          <td>${{ rent.monthly_rent }}</td>
+          <td><span class="badge badge-{{ rent.status|lower }}">{{ rent.status }}</span></td>
+          <td style="text-align: right;">
+            <a href="{% url 'rental_detail' rent.pk %}" class="btn btn-secondary btn-sm">View</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">
+            No rental agreements on record.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Payment History -->
+<div class="card">
+  <div class="card-header">
+    <h3>Payment History ({{ payment_history.count }})</h3>
+  </div>
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Payment No.</th>
+          <th>Rental</th>
+          <th>Billing Month</th>
+          <th>Amount Paid</th>
+          <th>Method</th>
+          <th>Date</th>
+          <th style="text-align: right;">Receipt</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for pay in payment_history %}
+        <tr>
+          <td><strong><a href="{% url 'payment_detail' pay.pk %}">{{ pay.payment_number }}</a></strong></td>
+          <td><a href="{% url 'rental_detail' pay.rental.pk %}">{{ pay.rental.rental_number }}</a></td>
+          <td>{{ pay.rent_charge.billing_month|date:"F Y" }}</td>
+          <td style="font-weight: 700; color: var(--green);">${{ pay.amount }}</td>
+          <td><span class="badge badge-secondary">{{ pay.payment_method }}</span></td>
+          <td>{{ pay.payment_date|date:"d/m/Y" }}</td>
+          <td style="text-align: right;">
+            <a href="{% url 'payment_receipt' pay.pk %}" class="btn btn-secondary btn-sm">Receipt</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">
+            No payment history recorded for this tenant.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

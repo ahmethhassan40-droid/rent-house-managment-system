@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Payment {{ payment.payment_number }} - RHMS{% endblock %}
+{% block page_title %}Payment Details{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'payment_receipt' payment.pk %}" class="btn btn-primary">
+  &#128424; Print Official Receipt
+</a>
+<a href="{% url 'rental_detail' payment.rental.pk %}" class="btn btn-secondary">
+  View Agreement
+</a>
+{% if user.is_superuser %}
+<a href="{% url 'payment_delete' payment.pk %}" class="btn btn-danger">
+  Delete Payment
+</a>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 800px; margin: 0 auto;">
+  <div class="card-header">
+    <div>
+      <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Payment Record</span>
+      <h2>{{ payment.payment_number }}</h2>
+    </div>
+    <span class="badge badge-paid">Paid</span>
+  </div>
+  <div class="card-body">
+    <div class="detail-grid">
+      <div class="detail-item">
+        <span class="detail-label">Amount Paid</span>
+        <span class="detail-value highlight" style="color: var(--green); font-size: 1.4rem;">
+          ${{ payment.amount }}
+        </span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Payment Method</span>
+        <span class="detail-value"><span class="badge badge-secondary">{{ payment.payment_method }}</span></span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Payment Date</span>
+        <span class="detail-value">{{ payment.payment_date|date:"d/m/Y" }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Transaction Reference</span>
+        <span class="detail-value">{{ payment.reference|default:"None" }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Rental Agreement</span>
+        <span class="detail-value">
+          <a href="{% url 'rental_detail' payment.rental.pk %}"><strong>{{ payment.rental.rental_number }}</strong></a>
+        </span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Tenant</span>
+        <span class="detail-value">
+          <a href="{% url 'tenant_detail' payment.rental.tenant.pk %}"><strong>{{ payment.rental.tenant.full_name }}</strong></a> ({{ payment.rental.tenant.phone }})
+        </span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Property</span>
+        <span class="detail-value">
+          <a href="{% url 'property_detail' payment.rental.property.pk %}">{{ payment.rental.property.name }}</a> ({{ payment.rental.property.property_code }})
+        </span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Applied to Billing Month</span>
+        <span class="detail-value"><strong>{{ payment.rent_charge.billing_month|date:"F Y" }}</strong></span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Month's Total Amount Due</span>
+        <span class="detail-value">${{ payment.rent_charge.amount_due }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Charge Outstanding Balance</span>
+        <span class="detail-value" style="font-weight: 700; color: {% if payment.rent_charge.outstanding_balance > 0 %}var(--red){% else %}var(--green){% endif %};">
+          ${{ payment.rent_charge.outstanding_balance }}
+        </span>
+      </div>
+    </div>
+
+    {% if payment.notes %}
+    <div style="margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border-color);">
+      <span class="detail-label">Notes</span>
+      <p style="margin-top: 4px; color: var(--text-main);">{{ payment.notes }}</p>
+    </div>
+    {% endif %}
+  </div>
+  <div class="card-footer">
+    <a href="{% url 'payment_list' %}" class="btn btn-secondary">&larr; Back to Payments</a>
+    <a href="{% url 'payment_receipt' payment.pk %}" class="btn btn-primary">&#128424; Print Receipt</a>
+  </div>
+</div>
+{% endblock %}

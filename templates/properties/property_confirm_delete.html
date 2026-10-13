@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Delete Property - RHMS{% endblock %}
+{% block page_title %}Confirm Property Deletion{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 40px auto;">
+  <div class="card-header" style="background-color: var(--red-light); border-bottom-color: #fca5a5;">
+    <h3 style="color: var(--red);">Confirm Deletion</h3>
+  </div>
+  <div class="card-body">
+    <p style="margin-bottom: 16px;">
+      Are you sure you want to delete property <strong>{{ property.name }}</strong> (<code>{{ property.property_code }}</code>)?
+    </p>
+
+    {% if property.has_active_rental %}
+    <div class="alert alert-danger">
+      <strong>Deletion Blocked:</strong> This property currently has an active rental agreement ({{ property.active_rental.rental_number }}). You must complete or cancel the agreement before deleting this property.
+    </div>
+    {% else %}
+    <p style="font-size: 0.85rem; color: var(--text-muted);">
+      This action cannot be undone if the property has no protected historical records.
+    </p>
+    {% endif %}
+
+    <div style="background-color: #f8fafc; padding: 14px; border-radius: 6px; margin: 16px 0;">
+      <div><strong>Type:</strong> {{ property.property_type }}</div>
+      <div><strong>City:</strong> {{ property.city }}</div>
+      <div><strong>Address:</strong> {{ property.address }}</div>
+      <div><strong>Status:</strong> <span class="badge badge-{{ property.status|lower }}">{{ property.status }}</span></div>
+    </div>
+  </div>
+  <div class="card-footer">
+    <a href="{% url 'property_detail' property.pk %}" class="btn btn-secondary">Cancel</a>
+    {% if not property.has_active_rental %}
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Yes, Delete Property</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Properties - RHMS{% endblock %}
+{% block page_title %}Properties{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'property_create' %}" class="btn btn-primary">
+  + Add Property
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Filters & Search -->
+<div class="filter-bar">
+  <form method="get" class="filter-form">
+    <div class="filter-group" style="flex: 1; min-width: 220px;">
+      <input type="text" name="q" value="{{ query }}" placeholder="Search by name, code, city, address..." style="width: 100%;">
+    </div>
+
+    <div class="filter-group">
+      <select name="property_type">
+        <option value="">All Types</option>
+        {% for val, label in property_types %}
+        <option value="{{ val }}" {% if selected_type == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <select name="status">
+        <option value="">All Statuses</option>
+        {% for val, label in status_choices %}
+        <option value="{{ val }}" {% if selected_status == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <select name="city">
+        <option value="">All Cities</option>
+        {% for c in available_cities %}
+        <option value="{{ c }}" {% if selected_city == c %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <button type="submit" class="btn btn-secondary btn-sm">Filter</button>
+    {% if query or selected_type or selected_status or selected_city %}
+    <a href="{% url 'property_list' %}" class="btn btn-secondary btn-sm" style="color: var(--text-muted);">Reset</a>
+    {% endif %}
+  </form>
+</div>
+
+<!-- Property Table -->
+<div class="card">
+  <div class="card-header">
+    <h3>All Properties ({{ page_obj.paginator.count }})</h3>
+  </div>
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Property Name</th>
+          <th>Type</th>
+          <th>City / Address</th>
+          <th>Monthly Rent</th>
+          <th>Status</th>
+          <th style="text-align: right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for prop in page_obj %}
+        <tr>
+          <td>
+            <strong style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;">
+              <a href="{% url 'property_detail' prop.pk %}">{{ prop.property_code }}</a>
+            </strong>
+          </td>
+          <td>
+            <a href="{% url 'property_detail' prop.pk %}" style="font-weight: 700; color: var(--slate-900);">
+              {{ prop.name }}
+            </a>
+          </td>
+          <td><span class="badge badge-secondary">{{ prop.property_type }}</span></td>
+          <td>{{ prop.city }}, {{ prop.address }}</td>
+          <td style="font-weight: 800; color: var(--slate-900); font-variant-numeric: tabular-nums;">${{ prop.monthly_rent }}</td>
+          <td>
+            <span class="badge badge-{{ prop.status|lower }}">{{ prop.status }}</span>
+          </td>
+          <td style="text-align: right;">
+            <a href="{% url 'property_detail' prop.pk %}" class="btn btn-secondary btn-sm">View</a>
+            <a href="{% url 'property_update' prop.pk %}" class="btn btn-secondary btn-sm">Edit</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7">
+            <div class="empty-state">
+              <div class="empty-state-icon">&#127968;</div>
+              <h4>No Properties Found</h4>
+              <p>No rental properties match your search criteria.</p>
+              <a href="{% url 'property_create' %}" class="btn btn-primary btn-sm">+ Register First Property</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {% if page_obj.has_other_pages %}
+  <div class="pagination">
+    <span>Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    <div class="pagination-links">
+      {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}{{ extra_query }}" class="btn btn-secondary btn-sm">&laquo; Previous</a>
+      {% endif %}
+      {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}{{ extra_query }}" class="btn btn-secondary btn-sm">Next &raquo;</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

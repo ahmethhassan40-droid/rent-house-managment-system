@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Delete Payment Record - RHMS{% endblock %}
+{% block page_title %}Confirm Payment Deletion{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 40px auto;">
+  <div class="card-header" style="background-color: var(--red-light); border-bottom-color: #fca5a5;">
+    <h3 style="color: var(--red);">Confirm Financial Deletion</h3>
+  </div>
+  <div class="card-body">
+    <p style="margin-bottom: 16px;">
+      Are you sure you want to delete payment record <strong>{{ payment.payment_number }}</strong> of <strong>${{ payment.amount }}</strong>?
+    </p>
+
+    <div class="alert alert-warning">
+      <strong>Warning:</strong> Payments are official financial records. Deleting this payment will reverse the balance on rent charge ({{ payment.rent_charge.billing_month|date:"F Y" }}). Only proceed if correcting an erroneous entry.
+    </div>
+
+    <div style="background-color: #f8fafc; padding: 14px; border-radius: 6px; margin: 16px 0;">
+      <div><strong>Payment Number:</strong> {{ payment.payment_number }}</div>
+      <div><strong>Rental:</strong> {{ payment.rental.rental_number }}</div>
+      <div><strong>Tenant:</strong> {{ payment.rental.tenant.full_name }}</div>
+      <div><strong>Amount:</strong> ${{ payment.amount }} ({{ payment.payment_method }})</div>
+      <div><strong>Date:</strong> {{ payment.payment_date|date:"d/m/Y" }}</div>
+    </div>
+  </div>
+  <div class="card-footer">
+    <a href="{% url 'payment_detail' payment.pk %}" class="btn btn-secondary">Cancel</a>
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Yes, Delete Payment</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

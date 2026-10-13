@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+
+{% block title %}Agreement {{ rental.rental_number }} - RHMS{% endblock %}
+{% block page_title %}Rental Agreement: {{ rental.rental_number }}{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'rental_print_summary' rental.pk %}" class="btn btn-secondary">
+  &#128424; Print Agreement Summary
+</a>
+<a href="{% url 'rent_charge_create' %}?rental={{ rental.pk }}" class="btn btn-primary">
+  + Generate Monthly Charge
+</a>
+<a href="{% url 'payment_create' %}?rental={{ rental.pk }}" class="btn btn-success">
+  + Record Payment
+</a>
+<a href="{% url 'rental_update' rental.pk %}" class="btn btn-secondary">Edit Agreement</a>
+{% if user.is_superuser %}
+<a href="{% url 'rental_delete' rental.pk %}" class="btn btn-danger">Delete</a>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<!-- Agreement Overview Card -->
+<div class="card">
+  <div class="card-header">
+    <div>
+      <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Agreement ID: {{ rental.rental_number }}</span>
+      <h2>{{ rental.property.name }} &mdash; {{ rental.tenant.full_name }}</h2>
+    </div>
+    <span class="badge badge-{{ rental.status|lower }}">{{ rental.status }}</span>
+  </div>
+  <div class="card-body">
+    <div class="detail-grid">
+      <div class="detail-item">
+        <span class="detail-label">Property</span>
+        <span class="detail-value">
+          <a href="{% url 'property_detail' rental.property.pk %}"><strong>{{ rental.property.name }}</strong></a> ({{ rental.property.property_code }})
+        </span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Property Type & Location</span>
+        <span class="detail-value">{{ rental.property.property_type }} &bull; {{ rental.property.city }}, {{ rental.property.address }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Tenant Name</span>
+        <span class="detail-value">
+          <a href="{% url 'tenant_detail' rental.tenant.pk %}"><strong>{{ rental.tenant.full_name }}</strong></a>
+        </span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Tenant Phone</span>
+        <span class="detail-value">{{ rental.tenant.phone }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Agreed Monthly Rent</span>
+        <span class="detail-value highlight">${{ rental.monthly_rent }} / mo</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Security Deposit</span>
+        <span class="detail-value">${{ rental.security_deposit }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Agreement Period</span>
+        <span class="detail-value">{{ rental.start_date|date:"d/m/Y" }} &rarr; {{ rental.end_date|date:"d/m/Y"|default:"Open-ended" }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Created Date</span>
+        <span class="detail-value">{{ rental.created_at|date:"M d, Y" }}</span>
+      </div>
+    </div>
+
+    <!-- Financial Accounting Summary for this Agreement -->
+    <div style="margin-top: 24px; padding: 22px 24px; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid var(--border); border-radius: var(--radius-lg);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <span style="font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: var(--slate-600);">Financial Settlement Status</span>
+        {% if rental.has_charges %}
+        <span style="font-size: 0.78rem; font-weight: 700; color: var(--slate-600);">
+          Collection Rate: <strong>{% widthratio rental.total_payments rental.total_charges 100 %}%</strong>
+        </span>
+        {% endif %}
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+        <div style="background: var(--white); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border); text-align: center;">
+          <span class="detail-label">Total Billed Charges</span>
+          <div style="font-size: 1.6rem; font-weight: 800; color: var(--slate-900); font-variant-numeric: tabular-nums;">${{ rental.total_charges }}</div>
+          <small style="color: var(--slate-500); font-weight: 500;">{{ charges.count }} recorded charge(s)</small>
+        </div>
+
+        <div style="background: var(--white); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border); text-align: center;">
+          <span class="detail-label">Total Payments Received</span>
+          <div style="font-size: 1.6rem; font-weight: 800; color: var(--emerald-600); font-variant-numeric: tabular-nums;">${{ rental.total_payments }}</div>
+          <small style="color: var(--slate-500); font-weight: 500;">{{ payments.count }} payment(s)</small>
+        </div>
+
+        <div style="background: var(--white); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border); text-align: center;">
+          <span class="detail-label">Outstanding Balance</span>
+          <div style="font-size: 1.6rem; font-weight: 800; color: {% if rental.outstanding_balance > 0 %}var(--rose-600){% else %}var(--emerald-600){% endif %}; font-variant-numeric: tabular-nums;">
+            ${{ rental.outstanding_balance }}
+          </div>
+          <small style="color: var(--slate-500); font-weight: 500;">
+            {% if not rental.has_charges %}
+              (No charges recorded yet)
+            {% elif rental.outstanding_balance == 0 %}
+              <span style="color: var(--emerald-600); font-weight: 700;">&#10003; Fully Settled</span>
+            {% else %}
+              <span style="color: var(--rose-600); font-weight: 700;">Payment Due</span>
+            {% endif %}
+          </small>
+        </div>
+      </div>
+
+      {% if rental.has_charges %}
+      <div class="progress-bar-container" style="margin-top: 16px;">
+        <div class="progress-bar-fill {% if rental.outstanding_balance == 0 %}success{% endif %}" style="width: {% widthratio rental.total_payments rental.total_charges 100 %}%;"></div>
+      </div>
+      {% endif %}
+    </div>
+
+    {% if rental.notes %}
+    <div style="margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border-color);">
+      <span class="detail-label">Agreement Terms & Notes</span>
+      <p style="margin-top: 4px; color: var(--text-main);">{{ rental.notes }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Status Change Action Form -->
+    <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+      <form method="post" action="{% url 'rental_status_update' rental.pk %}" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        {% csrf_token %}
+        <span style="font-size: 0.875rem; font-weight: 600;">Update Status:</span>
+        <select name="status" class="form-control" style="width: auto; padding: 6px 12px;">
+          <option value="Active" {% if rental.status == 'Active' %}selected{% endif %}>Active</option>
+          <option value="Completed" {% if rental.status == 'Completed' %}selected{% endif %}>Completed</option>
+          <option value="Cancelled" {% if rental.status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+        </select>
+        <button type="submit" class="btn btn-secondary btn-sm">Update Status</button>
+        <small style="color: var(--text-muted);">Changing to Completed or Cancelled frees up the property automatically.</small>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Rent Charges (Monthly Invoices) -->
+<div class="card">
+  <div class="card-header">
+    <h3>Monthly Rent Charges</h3>
+    <a href="{% url 'rent_charge_create' %}?rental={{ rental.pk }}" class="btn btn-primary btn-sm">
+      + New Rent Charge
+    </a>
+  </div>
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Billing Month</th>
+          <th>Due Date</th>
+          <th>Amount Due</th>
+          <th>Total Paid</th>
+          <th>Outstanding</th>
+          <th>Status</th>
+          <th style="text-align: right;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for charge in charges %}
+        <tr>
+          <td><strong>{{ charge.billing_month|date:"F Y" }}</strong></td>
+          <td>{{ charge.due_date|date:"d/m/Y" }}</td>
+          <td>${{ charge.amount_due }}</td>
+          <td style="color: var(--green); font-weight: 600;">${{ charge.total_paid }}</td>
+          <td style="font-weight: 700; color: {% if charge.outstanding_balance > 0 %}var(--red){% else %}var(--green){% endif %};">
+            ${{ charge.outstanding_balance }}
+          </td>
+          <td>
+            {% if charge.payment_status == 'Paid' %}
+              <span class="badge badge-paid">Paid</span>
+            {% elif charge.payment_status == 'Partially Paid' %}
+              <span class="badge badge-partially-paid">Partially Paid</span>
+            {% else %}
+              <span class="badge badge-unpaid">Unpaid</span>
+            {% endif %}
+          </td>
+          <td style="text-align: right;">
+            {% if charge.outstanding_balance > 0 %}
+            <a href="{% url 'payment_create' %}?rental={{ rental.pk }}&charge={{ charge.pk }}" class="btn btn-success btn-sm">
+              Pay Balance (${{ charge.outstanding_balance }})
+            </a>
+            {% else %}
+            <span style="font-size: 0.85rem; color: var(--green); font-weight: 600;">&#10003; Paid</span>
+            {% endif %}
+            {% if user.is_superuser and charge.payments.count == 0 %}
+            <form method="post" action="{% url 'rent_charge_delete' charge.pk %}" style="display: inline;" onsubmit="return confirm('Delete this unbilled charge?');">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-danger btn-sm" style="padding: 4px 8px; font-size: 0.75rem;">Delete</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7">
+            <div class="empty-state" style="padding: 24px;">
+              <p>No monthly rent charges have been recorded yet for this agreement.</p>
+              <a href="{% url 'rent_charge_create' %}?rental={{ rental.pk }}" class="btn btn-primary btn-sm">+ Generate First Rent Charge</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Payments History for this Rental -->
+<div class="card">
+  <div class="card-header">
+    <h3>Payment History</h3>
+    <a href="{% url 'payment_create' %}?rental={{ rental.pk }}" class="btn btn-success btn-sm">
+      + Record Payment
+    </a>
+  </div>
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Payment No.</th>
+          <th>Billing Month</th>
+          <th>Amount Paid</th>
+          <th>Method</th>
+          <th>Payment Date</th>
+          <th>Reference</th>
+          <th style="text-align: right;">Receipt</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for pay in payments %}
+        <tr>
+          <td><strong><a href="{% url 'payment_detail' pay.pk %}">{{ pay.payment_number }}</a></strong></td>
+          <td>{{ pay.rent_charge.billing_month|date:"F Y" }}</td>
+          <td style="font-weight: 700; color: var(--green);">${{ pay.amount }}</td>
+          <td><span class="badge badge-secondary">{{ pay.payment_method }}</span></td>
+          <td>{{ pay.payment_date|date:"d/m/Y" }}</td>
+          <td>{{ pay.reference|default:"-" }}</td>
+          <td style="text-align: right;">
+            <a href="{% url 'payment_receipt' pay.pk %}" class="btn btn-secondary btn-sm">&#128424; Print Receipt</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7">
+            <div class="empty-state" style="padding: 20px;">
+              <p>No payments recorded yet for this agreement.</p>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

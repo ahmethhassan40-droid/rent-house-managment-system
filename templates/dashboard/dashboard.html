@@ -1,0 +1,334 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Rent House Management System{% endblock %}
+{% block page_title %}Overview Dashboard{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'property_create' %}" class="btn btn-secondary btn-sm">
+  <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+  Add Property
+</a>
+<a href="{% url 'tenant_create' %}" class="btn btn-secondary btn-sm">
+  <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+  Add Tenant
+</a>
+<a href="{% url 'rental_create' %}" class="btn btn-secondary btn-sm">
+  <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+  New Agreement
+</a>
+<a href="{% url 'payment_create' %}" class="btn btn-primary btn-sm">
+  <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+  Record Payment
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Executive Welcome Banner -->
+<div class="welcome-hero">
+  <div class="welcome-hero-content">
+    <h2>Welcome back, {{ user.get_full_name|default:user.username }} 👋</h2>
+    <p>Real-time rental portfolio overview, tenant occupancy, and financial ledger status.</p>
+  </div>
+  <div class="welcome-hero-meta">
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+      <div style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.18); padding: 6px 14px; border-radius: var(--radius-full); font-size: 0.78rem; font-weight: 700;">
+        Occupancy: <strong>{{ occupancy_rate }}%</strong>
+      </div>
+      <div class="live-pulse-badge">
+        <span class="pulse-dot"></span>
+        <span>Portfolio Active</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Financial Health Summary Bar -->
+<div class="card" style="margin-bottom: 24px; background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);">
+  <div class="card-body" style="padding: 20px 24px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <h4 style="font-size: 0.95rem; font-weight: 800; color: var(--slate-900);">Rental Revenue & Collection Overview</h4>
+        <span style="font-size: 0.78rem; color: var(--slate-500);">Total Invoiced: <strong>${{ total_charges_billed }}</strong> &bull; Total Collected: <strong style="color: var(--emerald-600);">${{ total_rent_collected }}</strong> &bull; Outstanding: <strong style="color: {% if pending_rent_balance > 0 %}var(--rose-600){% else %}var(--emerald-600){% endif %};">${{ pending_rent_balance }}</strong></span>
+      </div>
+      <div style="text-align: right;">
+        <span style="font-size: 0.85rem; font-weight: 800; color: var(--primary);">{{ collection_rate }}% Collected</span>
+      </div>
+    </div>
+    <div class="progress-bar-container" style="height: 10px; margin-top: 6px;">
+      <div class="progress-bar-fill {% if pending_rent_balance == 0 %}success{% endif %}" style="width: {{ collection_rate }}%;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 7 Key Performance Indicators (KPI Cards) -->
+<div class="stats-grid">
+  <!-- 1. Total Properties -->
+  <div class="stat-card">
+    <div class="stat-card-header">
+      <span class="stat-card-title">Total Properties</span>
+      <div class="stat-icon-badge blue">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+      </div>
+    </div>
+    <div>
+      <div class="stat-card-value">{{ total_properties }}</div>
+      <span class="stat-card-subtitle">Registered units in portfolio</span>
+    </div>
+  </div>
+
+  <!-- 2. Available Units -->
+  <div class="stat-card">
+    <div class="stat-card-header">
+      <span class="stat-card-title">Available Properties</span>
+      <div class="stat-icon-badge emerald">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+    </div>
+    <div>
+      <div class="stat-card-value success">{{ available_properties }}</div>
+      <span class="stat-card-subtitle">Ready to rent immediately</span>
+    </div>
+  </div>
+
+  <!-- 3. Rented Properties -->
+  <div class="stat-card">
+    <div class="stat-card-header">
+      <span class="stat-card-title">Rented Properties</span>
+      <div class="stat-icon-badge indigo">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      </div>
+    </div>
+    <div>
+      <div class="stat-card-value primary">{{ rented_properties }}</div>
+      <span class="stat-card-subtitle">Occupied by active tenants</span>
+    </div>
+  </div>
+
+  <!-- 4. Total Tenants -->
+  <div class="stat-card">
+    <div class="stat-card-header">
+      <span class="stat-card-title">Total Tenants</span>
+      <div class="stat-icon-badge purple">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+      </div>
+    </div>
+    <div>
+      <div class="stat-card-value">{{ total_tenants }}</div>
+      <span class="stat-card-subtitle">Tenant records registered</span>
+    </div>
+  </div>
+
+  <!-- 5. Active Rentals -->
+  <div class="stat-card">
+    <div class="stat-card-header">
+      <span class="stat-card-title">Active Rentals</span>
+      <div class="stat-icon-badge blue">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      </div>
+    </div>
+    <div>
+      <div class="stat-card-value primary">{{ active_rentals }}</div>
+      <span class="stat-card-subtitle">Current lease contracts</span>
+    </div>
+  </div>
+
+  <!-- 6. Pending Rent Balance -->
+  <div class="stat-card">
+    <div class="stat-card-header">
+      <span class="stat-card-title">Pending Rent Balance</span>
+      <div class="stat-icon-badge amber">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+    </div>
+    <div>
+      <div class="stat-card-value warning">${{ pending_rent_balance }}</div>
+      <span class="stat-card-subtitle">Uncollected billed charges</span>
+    </div>
+  </div>
+
+  <!-- 7. Total Rent Collected -->
+  <div class="stat-card">
+    <div class="stat-card-header">
+      <span class="stat-card-title">Total Rent Collected</span>
+      <div class="stat-icon-badge emerald">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+    </div>
+    <div>
+      <div class="stat-card-value success">${{ total_rent_collected }}</div>
+      <span class="stat-card-subtitle">Sum of verified payments</span>
+    </div>
+  </div>
+</div>
+
+<!-- Pending Rent Invoices Section (Action Required for Landlord) -->
+{% if pending_charges %}
+<div class="card" style="margin-bottom: 26px; border-left: 4px solid var(--amber-500);">
+  <div class="card-header" style="background-color: var(--amber-50);">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <span style="font-size: 1.2rem;">&#9888;</span>
+      <div>
+        <h3 style="color: var(--amber-text); font-size: 1.05rem;">Unpaid / Pending Rent Balances (Action Required)</h3>
+        <span style="font-size: 0.76rem; color: var(--amber-text);">Tenants with pending balances on recorded monthly charges</span>
+      </div>
+    </div>
+    <a href="{% url 'rent_charge_list' %}" class="btn btn-secondary btn-sm">All Charges &rarr;</a>
+  </div>
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Rental No.</th>
+          <th>Property</th>
+          <th>Tenant</th>
+          <th>Billing Month</th>
+          <th>Amount Due</th>
+          <th>Paid So Far</th>
+          <th>Outstanding</th>
+          <th style="text-align: right;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for charge in pending_charges %}
+        <tr>
+          <td>
+            <strong style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;">
+              <a href="{% url 'rental_detail' charge.rental.pk %}">{{ charge.rental.rental_number }}</a>
+            </strong>
+          </td>
+          <td>
+            <a href="{% url 'property_detail' charge.rental.property.pk %}">{{ charge.rental.property.name }}</a>
+          </td>
+          <td>
+            <a href="{% url 'tenant_detail' charge.rental.tenant.pk %}"><strong>{{ charge.rental.tenant.full_name }}</strong></a> ({{ charge.rental.tenant.phone }})
+          </td>
+          <td><strong>{{ charge.billing_month|date:"F Y" }}</strong></td>
+          <td>${{ charge.amount_due }}</td>
+          <td style="color: var(--emerald-600); font-weight: 600;">${{ charge.total_paid }}</td>
+          <td style="font-weight: 800; color: var(--rose-600); font-variant-numeric: tabular-nums;">
+            ${{ charge.outstanding_balance }}
+          </td>
+          <td style="text-align: right;">
+            <a href="{% url 'payment_create' %}?rental={{ charge.rental.pk }}&charge={{ charge.pk }}" class="btn btn-success btn-sm">
+              Pay Balance (${{ charge.outstanding_balance }})
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- Split Tables Section: Recent Rentals & Recent Payments -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap: 24px;">
+  <!-- Recent Rentals -->
+  <div class="card" style="margin-bottom: 0;">
+    <div class="card-header">
+      <div>
+        <h3>Recent Rental Agreements</h3>
+        <span style="font-size: 0.76rem; color: var(--slate-500);">Latest contracts entered into the system</span>
+      </div>
+      <a href="{% url 'rental_list' %}" class="btn btn-secondary btn-sm">View All &rarr;</a>
+    </div>
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Agreement No.</th>
+            <th>Property</th>
+            <th>Tenant</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for rent in recent_rentals %}
+          <tr>
+            <td>
+              <strong style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;">
+                <a href="{% url 'rental_detail' rent.pk %}">{{ rent.rental_number }}</a>
+              </strong>
+            </td>
+            <td>
+              <a href="{% url 'property_detail' rent.property.pk %}" style="font-weight: 700; color: var(--slate-900);">
+                {{ rent.property.name }}
+              </a>
+            </td>
+            <td>
+              <a href="{% url 'tenant_detail' rent.tenant.pk %}">{{ rent.tenant.full_name }}</a>
+            </td>
+            <td>
+              <span class="badge badge-{{ rent.status|lower }}">{{ rent.status }}</span>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4">
+              <div class="empty-state" style="padding: 32px;">
+                <p>No rental agreements recorded yet.</p>
+                <a href="{% url 'rental_create' %}" class="btn btn-primary btn-sm">+ Create Agreement</a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Recent Payments -->
+  <div class="card" style="margin-bottom: 0;">
+    <div class="card-header">
+      <div>
+        <h3>Recent Payments</h3>
+        <span style="font-size: 0.76rem; color: var(--slate-500);">Latest recorded rent transactions</span>
+      </div>
+      <a href="{% url 'payment_list' %}" class="btn btn-secondary btn-sm">View All &rarr;</a>
+    </div>
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Payment No.</th>
+            <th>Tenant</th>
+            <th>Amount</th>
+            <th>Method</th>
+            <th style="text-align: right;">Receipt</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for pay in recent_payments %}
+          <tr>
+            <td>
+              <strong style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;">
+                <a href="{% url 'payment_detail' pay.pk %}">{{ pay.payment_number }}</a>
+              </strong>
+            </td>
+            <td>{{ pay.rental.tenant.full_name }}</td>
+            <td style="font-weight: 800; color: var(--emerald-600); font-variant-numeric: tabular-nums;">
+              ${{ pay.amount }}
+            </td>
+            <td><span class="badge badge-secondary">{{ pay.payment_method }}</span></td>
+            <td style="text-align: right;">
+              <a href="{% url 'payment_receipt' pay.pk %}" class="btn btn-secondary btn-sm" title="Print Official Receipt">
+                &#128424; Receipt
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5">
+              <div class="empty-state" style="padding: 32px;">
+                <p>No payments recorded yet.</p>
+                <a href="{% url 'payment_create' %}" class="btn btn-success btn-sm">+ Record Payment</a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

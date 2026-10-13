@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Tenants - RHMS{% endblock %}
+{% block page_title %}Tenants{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'tenant_create' %}" class="btn btn-primary">
+  + Register Tenant
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Search Bar -->
+<div class="filter-bar">
+  <form method="get" class="filter-form">
+    <div class="filter-group" style="flex: 1; min-width: 250px;">
+      <input type="text" name="q" value="{{ query }}" placeholder="Search by name, phone, tenant number, email..." style="width: 100%;">
+    </div>
+    <button type="submit" class="btn btn-secondary btn-sm">Search</button>
+    {% if query %}
+    <a href="{% url 'tenant_list' %}" class="btn btn-secondary btn-sm" style="color: var(--text-muted);">Reset</a>
+    {% endif %}
+  </form>
+</div>
+
+<!-- Tenants Table -->
+<div class="card">
+  <div class="card-header">
+    <h3>All Tenants ({{ page_obj.paginator.count }})</h3>
+  </div>
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Tenant No.</th>
+          <th>Full Name</th>
+          <th>Phone</th>
+          <th>Email</th>
+          <th>Active Rentals</th>
+          <th>Joined Date</th>
+          <th style="text-align: right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for tenant in page_obj %}
+        <tr>
+          <td>
+            <strong style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;">
+              <a href="{% url 'tenant_detail' tenant.pk %}">{{ tenant.tenant_number }}</a>
+            </strong>
+          </td>
+          <td>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div style="width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #dbeafe, #bfdbfe); color: var(--primary-dark); font-weight: 800; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                {{ tenant.full_name|make_list|first|upper }}
+              </div>
+              <a href="{% url 'tenant_detail' tenant.pk %}" style="font-weight: 700; color: var(--slate-900);">
+                {{ tenant.full_name }}
+              </a>
+            </div>
+          </td>
+          <td style="font-weight: 600;">{{ tenant.phone }}</td>
+          <td>{{ tenant.email|default:"-" }}</td>
+          <td>
+            {% with count=tenant.active_rentals.count %}
+              {% if count > 0 %}
+              <span class="badge badge-active">{{ count }} Active</span>
+              {% else %}
+              <span class="badge badge-secondary">None</span>
+              {% endif %}
+            {% endwith %}
+          </td>
+          <td>{{ tenant.created_at|date:"M d, Y" }}</td>
+          <td style="text-align: right;">
+            <a href="{% url 'tenant_detail' tenant.pk %}" class="btn btn-secondary btn-sm">View</a>
+            <a href="{% url 'tenant_update' tenant.pk %}" class="btn btn-secondary btn-sm">Edit</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7">
+            <div class="empty-state">
+              <div class="empty-state-icon">&#128100;</div>
+              <h4>No Tenants Found</h4>
+              <p>No tenant records match your search criteria.</p>
+              <a href="{% url 'tenant_create' %}" class="btn btn-primary btn-sm">+ Register First Tenant</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {% if page_obj.has_other_pages %}
+  <div class="pagination">
+    <span>Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    <div class="pagination-links">
+      {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}{{ extra_query }}" class="btn btn-secondary btn-sm">&laquo; Previous</a>
+      {% endif %}
+      {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}{{ extra_query }}" class="btn btn-secondary btn-sm">Next &raquo;</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

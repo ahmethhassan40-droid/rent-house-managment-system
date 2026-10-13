@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}{{ property.name }} ({{ property.property_code }}) - RHMS{% endblock %}
+{% block page_title %}Property Details{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'property_update' property.pk %}" class="btn btn-secondary">Edit Property</a>
+{% if user.is_superuser %}
+<a href="{% url 'property_delete' property.pk %}" class="btn btn-danger">Delete Property</a>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <div>
+      <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">{{ property.property_code }}</span>
+      <h2 style="margin-top: 2px;">{{ property.name }}</h2>
+    </div>
+    <span class="badge badge-{{ property.status|lower }}">{{ property.status }}</span>
+  </div>
+  <div class="card-body">
+    <div class="detail-grid">
+      <div class="detail-item">
+        <span class="detail-label">Property Type</span>
+        <span class="detail-value">{{ property.property_type }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Monthly Rent</span>
+        <span class="detail-value highlight">${{ property.monthly_rent }} / mo</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">City</span>
+        <span class="detail-value">{{ property.city }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Address</span>
+        <span class="detail-value">{{ property.address }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Bedrooms</span>
+        <span class="detail-value">{{ property.bedrooms|default:"0" }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Bathrooms</span>
+        <span class="detail-value">{{ property.bathrooms|default:"0" }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Registered Date</span>
+        <span class="detail-value">{{ property.created_at|date:"M d, Y" }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Last Updated</span>
+        <span class="detail-value">{{ property.updated_at|date:"M d, Y" }}</span>
+      </div>
+    </div>
+
+    {% if property.description %}
+    <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+      <span class="detail-label">Description</span>
+      <p style="margin-top: 4px; color: var(--text-main);">{{ property.description }}</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Active Rental Agreement Box -->
+<div class="card">
+  <div class="card-header">
+    <h3>Active Rental Agreement</h3>
+    {% if property.status == 'Available' %}
+    <a href="{% url 'rental_create' %}?property={{ property.pk }}" class="btn btn-primary btn-sm">
+      + Rent Out This Property
+    </a>
+    {% endif %}
+  </div>
+  <div class="card-body">
+    {% if active_rental %}
+    <div class="detail-grid">
+      <div class="detail-item">
+        <span class="detail-label">Agreement No.</span>
+        <span class="detail-value">
+          <a href="{% url 'rental_detail' active_rental.pk %}" style="font-weight: 700;">
+            {{ active_rental.rental_number }}
+          </a>
+        </span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Current Tenant</span>
+        <span class="detail-value">
+          <a href="{% url 'tenant_detail' active_rental.tenant.pk %}">
+            {{ active_rental.tenant.full_name }}
+          </a> ({{ active_rental.tenant.phone }})
+        </span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Start Date</span>
+        <span class="detail-value">{{ active_rental.start_date|date:"d/m/Y" }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">End Date</span>
+        <span class="detail-value">{{ active_rental.end_date|date:"d/m/Y"|default:"Open-ended" }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Security Deposit</span>
+        <span class="detail-value">${{ active_rental.security_deposit }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Outstanding Balance</span>
+        <span class="detail-value" style="color: {% if active_rental.outstanding_balance > 0 %}var(--red){% else %}var(--green){% endif %}; font-weight: 700;">
+          ${{ active_rental.outstanding_balance }}
+        </span>
+      </div>
+    </div>
+    <div style="margin-top: 16px;">
+      <a href="{% url 'rental_detail' active_rental.pk %}" class="btn btn-secondary btn-sm">View Agreement Details &rarr;</a>
+    </div>
+    {% else %}
+    <div class="empty-state" style="padding: 24px;">
+      <p style="margin-bottom: 8px;">No active rental agreement for this property.</p>
+      {% if property.status == 'Available' %}
+      <a href="{% url 'rental_create' %}?property={{ property.pk }}" class="btn btn-primary btn-sm">+ Create Rental Agreement</a>
+      {% else %}
+      <span class="badge badge-{{ property.status|lower }}">Property is {{ property.status }}</span>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Historical Rental Agreements -->
+<div class="card">
+  <div class="card-header">
+    <h3>Rental History</h3>
+  </div>
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Rental No.</th>
+          <th>Tenant</th>
+          <th>Period</th>
+          <th>Monthly Rent</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for rent in historical_rentals %}
+        <tr>
+          <td><a href="{% url 'rental_detail' rent.pk %}"><strong>{{ rent.rental_number }}</strong></a></td>
+          <td><a href="{% url 'tenant_detail' rent.tenant.pk %}">{{ rent.tenant.full_name }}</a></td>
+          <td>{{ rent.start_date|date:"d/m/Y" }} - {{ rent.end_date|date:"d/m/Y"|default:"Open" }}</td>
+          <td>${{ rent.monthly_rent }}</td>
+          <td><span class="badge badge-{{ rent.status|lower }}">{{ rent.status }}</span></td>
+          <td><a href="{% url 'rental_detail' rent.pk %}" class="btn btn-secondary btn-sm">View</a></td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">
+            No historical rental agreements recorded for this property.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Delete Rental Agreement - RHMS{% endblock %}
+{% block page_title %}Confirm Agreement Deletion{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 40px auto;">
+  <div class="card-header" style="background-color: var(--red-light); border-bottom-color: #fca5a5;">
+    <h3 style="color: var(--red);">Confirm Agreement Deletion</h3>
+  </div>
+  <div class="card-body">
+    <p style="margin-bottom: 16px;">
+      Are you sure you want to delete agreement <strong>{{ rental.rental_number }}</strong>?
+    </p>
+
+    {% if rental.charges.exists or rental.payments.exists %}
+    <div class="alert alert-danger">
+      <strong>Deletion Blocked:</strong> This agreement has associated financial records (charges or payments). Financial history must be preserved. To close the rental, set its status to <em>Completed</em> or <em>Cancelled</em> instead.
+    </div>
+    {% endif %}
+
+    <div style="background-color: #f8fafc; padding: 14px; border-radius: 6px; margin: 16px 0;">
+      <div><strong>Property:</strong> {{ rental.property.name }}</div>
+      <div><strong>Tenant:</strong> {{ rental.tenant.full_name }}</div>
+      <div><strong>Period:</strong> {{ rental.start_date|date:"d/m/Y" }} &rarr; {{ rental.end_date|date:"d/m/Y"|default:"Open-ended" }}</div>
+      <div><strong>Status:</strong> <span class="badge badge-{{ rental.status|lower }}">{{ rental.status }}</span></div>
+    </div>
+  </div>
+  <div class="card-footer">
+    <a href="{% url 'rental_detail' rental.pk %}" class="btn btn-secondary">Cancel</a>
+    {% if not rental.charges.exists and not rental.payments.exists %}
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Yes, Delete Agreement</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

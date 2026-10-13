@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Rental Agreement Summary - {{ rental.rental_number }}{% endblock %}
+{% block page_title %}Agreement Summary: {{ rental.rental_number }}{% endblock %}
+
+{% block page_actions %}
+<div class="receipt-actions" style="margin: 0;">
+  <button class="btn btn-primary" data-action="print">&#128424; Print Agreement</button>
+  <a href="{% url 'rental_detail' rental.pk %}" class="btn btn-secondary">&larr; Back to Agreement</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="receipt-wrapper" style="max-width: 720px;">
+  <div class="receipt-header">
+    <h2>RENT HOUSE MANAGEMENT SYSTEM</h2>
+    <p>Rental Agreement Summary</p>
+    <div style="font-size: 0.95rem; font-weight: 700; margin-top: 6px; color: var(--navy-dark);">
+      Ref: {{ rental.rental_number }}
+    </div>
+  </div>
+
+  <div class="receipt-body">
+    <div style="margin-bottom: 20px;">
+      <h4 style="border-bottom: 1px solid var(--border-color); padding-bottom: 6px; margin-bottom: 10px; color: var(--navy-dark);">Property Details</h4>
+      <table>
+        <tr>
+          <td class="label">Property Name:</td>
+          <td class="val">{{ rental.property.name }}</td>
+        </tr>
+        <tr>
+          <td class="label">Property Code:</td>
+          <td class="val">{{ rental.property.property_code }}</td>
+        </tr>
+        <tr>
+          <td class="label">Type:</td>
+          <td class="val">{{ rental.property.property_type }}</td>
+        </tr>
+        <tr>
+          <td class="label">Address & City:</td>
+          <td class="val">{{ rental.property.address }}, {{ rental.property.city }}</td>
+        </tr>
+      </table>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+      <h4 style="border-bottom: 1px solid var(--border-color); padding-bottom: 6px; margin-bottom: 10px; color: var(--navy-dark);">Tenant Details</h4>
+      <table>
+        <tr>
+          <td class="label">Tenant Name:</td>
+          <td class="val">{{ rental.tenant.full_name }}</td>
+        </tr>
+        <tr>
+          <td class="label">Tenant Number:</td>
+          <td class="val">{{ rental.tenant.tenant_number }}</td>
+        </tr>
+        <tr>
+          <td class="label">Phone:</td>
+          <td class="val">{{ rental.tenant.phone }}</td>
+        </tr>
+        {% if rental.tenant.email %}
+        <tr>
+          <td class="label">Email:</td>
+          <td class="val">{{ rental.tenant.email }}</td>
+        </tr>
+        {% endif %}
+      </table>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+      <h4 style="border-bottom: 1px solid var(--border-color); padding-bottom: 6px; margin-bottom: 10px; color: var(--navy-dark);">Rental Terms & Financials</h4>
+      <table>
+        <tr>
+          <td class="label">Agreement Status:</td>
+          <td class="val"><span class="badge badge-{{ rental.status|lower }}">{{ rental.status }}</span></td>
+        </tr>
+        <tr>
+          <td class="label">Start Date:</td>
+          <td class="val">{{ rental.start_date|date:"d/m/Y" }}</td>
+        </tr>
+        <tr>
+          <td class="label">End Date:</td>
+          <td class="val">{{ rental.end_date|date:"d/m/Y"|default:"Open-ended" }}</td>
+        </tr>
+        <tr>
+          <td class="label">Monthly Rent:</td>
+          <td class="val">${{ rental.monthly_rent }}</td>
+        </tr>
+        <tr>
+          <td class="label">Security Deposit:</td>
+          <td class="val">${{ rental.security_deposit }}</td>
+        </tr>
+        <tr>
+          <td class="label">Total Billed Rent:</td>
+          <td class="val">${{ rental.total_charges }}</td>
+        </tr>
+        <tr>
+          <td class="label">Total Payments Received:</td>
+          <td class="val" style="color: var(--green);">${{ rental.total_payments }}</td>
+        </tr>
+        <tr style="border-top: 1px dashed #94a3b8;">
+          <td class="label" style="font-weight: 700; padding-top: 10px;">Outstanding Balance:</td>
+          <td class="val" style="font-size: 1.15rem; color: {% if rental.outstanding_balance > 0 %}var(--red){% else %}var(--green){% endif %}; padding-top: 10px;">
+            ${{ rental.outstanding_balance }}
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    {% if rental.notes %}
+    <div style="margin-top: 16px;">
+      <h4 style="border-bottom: 1px solid var(--border-color); padding-bottom: 6px; margin-bottom: 6px; color: var(--navy-dark);">Notes / Conditions</h4>
+      <p style="font-size: 0.9rem; color: var(--text-main);">{{ rental.notes }}</p>
+    </div>
+    {% endif %}
+
+    <div style="display: flex; justify-content: space-between; margin-top: 50px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+      <div style="text-align: center; width: 45%;">
+        <div style="border-bottom: 1px solid #94a3b8; height: 35px;"></div>
+        <div style="font-size: 0.8rem; margin-top: 6px; color: var(--text-muted);">Landlord / Manager Signature</div>
+      </div>
+      <div style="text-align: center; width: 45%;">
+        <div style="border-bottom: 1px solid #94a3b8; height: 35px;"></div>
+        <div style="font-size: 0.8rem; margin-top: 6px; color: var(--text-muted);">Tenant Signature</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="receipt-footer">
+    <p>This document summarizes the rental agreement recorded in RHMS.</p>
+    <p>Generated on {% now "d/m/Y H:i" %}</p>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Payments - RHMS{% endblock %}
+{% block page_title %}Rent Payments{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'payment_create' %}" class="btn btn-primary">
+  + Record Payment
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Search & Filters -->
+<div class="filter-bar">
+  <form method="get" class="filter-form">
+    <div class="filter-group" style="flex: 1; min-width: 240px;">
+      <input type="text" name="q" value="{{ query }}" placeholder="Search by payment no, tenant, rental, reference..." style="width: 100%;">
+    </div>
+
+    <div class="filter-group">
+      <select name="payment_method">
+        <option value="">All Payment Methods</option>
+        {% for val, label in payment_methods %}
+        <option value="{{ val }}" {% if selected_method == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label style="font-size: 0.8rem; color: var(--text-muted);">Date:</label>
+      <input type="date" name="payment_date" value="{{ payment_date }}">
+    </div>
+
+    <button type="submit" class="btn btn-secondary btn-sm">Filter</button>
+    {% if query or selected_method or payment_date %}
+    <a href="{% url 'payment_list' %}" class="btn btn-secondary btn-sm" style="color: var(--text-muted);">Reset</a>
+    {% endif %}
+  </form>
+</div>
+
+<!-- Payments Table -->
+<div class="card">
+  <div class="card-header">
+    <h3>All Payments ({{ page_obj.paginator.count }})</h3>
+  </div>
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Payment No.</th>
+          <th>Rental</th>
+          <th>Tenant</th>
+          <th>Billing Month</th>
+          <th>Amount Paid</th>
+          <th>Method</th>
+          <th>Date</th>
+          <th>Reference</th>
+          <th style="text-align: right;">Receipt</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for pay in page_obj %}
+        <tr>
+          <td>
+            <strong style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;">
+              <a href="{% url 'payment_detail' pay.pk %}">{{ pay.payment_number }}</a>
+            </strong>
+          </td>
+          <td>
+            <a href="{% url 'rental_detail' pay.rental.pk %}" style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;">
+              {{ pay.rental.rental_number }}
+            </a>
+          </td>
+          <td>
+            <a href="{% url 'tenant_detail' pay.rental.tenant.pk %}" style="font-weight: 700; color: var(--slate-900);">
+              {{ pay.rental.tenant.full_name }}
+            </a>
+          </td>
+          <td><strong>{{ pay.rent_charge.billing_month|date:"F Y" }}</strong></td>
+          <td style="font-weight: 800; color: var(--emerald-600); font-variant-numeric: tabular-nums;">${{ pay.amount }}</td>
+          <td><span class="badge badge-secondary">{{ pay.payment_method }}</span></td>
+          <td>{{ pay.payment_date|date:"d/m/Y" }}</td>
+          <td><span style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--slate-600);">{{ pay.reference|default:"-" }}</span></td>
+          <td style="text-align: right;">
+            <a href="{% url 'payment_receipt' pay.pk %}" class="btn btn-secondary btn-sm" title="Print Official Receipt">&#128424; Receipt</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="9">
+            <div class="empty-state">
+              <div class="empty-state-icon">&#128178;</div>
+              <h4>No Payments Recorded</h4>
+              <p>No payments match your search criteria.</p>
+              <a href="{% url 'payment_create' %}" class="btn btn-primary btn-sm">+ Record First Payment</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {% if page_obj.has_other_pages %}
+  <div class="pagination">
+    <span>Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    <div class="pagination-links">
+      {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}{{ extra_query }}" class="btn btn-secondary btn-sm">&laquo; Previous</a>
+      {% endif %}
+      {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}{{ extra_query }}" class="btn btn-secondary btn-sm">Next &raquo;</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

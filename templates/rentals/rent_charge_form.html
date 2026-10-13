@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - RHMS{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 650px; margin: 0 auto;">
+  <div class="card-header">
+    <h3>{{ title }}</h3>
+    {% if rental %}
+    <a href="{% url 'rental_detail' rental.pk %}" class="btn btn-secondary btn-sm">&larr; Back to Agreement</a>
+    {% else %}
+    <a href="{% url 'rent_charge_list' %}" class="btn btn-secondary btn-sm">&larr; Back to Charges</a>
+    {% endif %}
+  </div>
+  <form method="post">
+    {% csrf_token %}
+    <div class="card-body">
+      {% if form.non_field_errors %}
+      <div class="alert alert-danger">
+        {% for error in form.non_field_errors %}
+          <div>{{ error }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="form-grid">
+        <div class="form-group full-width">
+          <label class="form-label" for="{{ form.rental.id_for_label }}">Rental Agreement <span class="required">*</span></label>
+          {{ form.rental }}
+          {% if form.rental.errors %}<div class="form-error">{{ form.rental.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="{{ form.billing_month_input.id_for_label }}">Billing Month <span class="required">*</span></label>
+          {{ form.billing_month_input }}
+          {% if form.billing_month_input.errors %}<div class="form-error">{{ form.billing_month_input.errors.0 }}</div>{% endif %}
+          <div class="form-help">Select the month/year (e.g. 2026-11). Only one charge per month.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="{{ form.amount_due.id_for_label }}">Amount Due ($ USD) <span class="required">*</span></label>
+          {{ form.amount_due }}
+          {% if form.amount_due.errors %}<div class="form-error">{{ form.amount_due.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="form-group full-width">
+          <label class="form-label" for="{{ form.due_date.id_for_label }}">Due Date <span class="required">*</span></label>
+          {{ form.due_date }}
+          {% if form.due_date.errors %}<div class="form-error">{{ form.due_date.errors.0 }}</div>{% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="card-footer">
+      {% if rental %}
+      <a href="{% url 'rental_detail' rental.pk %}" class="btn btn-secondary">Cancel</a>
+      {% else %}
+      <a href="{% url 'rent_charge_list' %}" class="btn btn-secondary">Cancel</a>
+      {% endif %}
+      <button type="submit" class="btn btn-primary">Generate Rent Charge</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

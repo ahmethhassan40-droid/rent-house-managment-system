@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Delete Tenant - RHMS{% endblock %}
+{% block page_title %}Confirm Tenant Deletion{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 40px auto;">
+  <div class="card-header" style="background-color: var(--red-light); border-bottom-color: #fca5a5;">
+    <h3 style="color: var(--red);">Confirm Deletion</h3>
+  </div>
+  <div class="card-body">
+    <p style="margin-bottom: 16px;">
+      Are you sure you want to delete tenant <strong>{{ tenant.full_name }}</strong> (<code>{{ tenant.tenant_number }}</code>)?
+    </p>
+
+    {% if tenant.has_active_rentals %}
+    <div class="alert alert-danger">
+      <strong>Deletion Blocked:</strong> This tenant currently has active rental agreements. You cannot delete a tenant who is currently occupying a property.
+    </div>
+    {% else %}
+    <p style="font-size: 0.85rem; color: var(--text-muted);">
+      This action cannot be undone if the tenant has no protected historical records.
+    </p>
+    {% endif %}
+
+    <div style="background-color: #f8fafc; padding: 14px; border-radius: 6px; margin: 16px 0;">
+      <div><strong>Full Name:</strong> {{ tenant.full_name }}</div>
+      <div><strong>Phone:</strong> {{ tenant.phone }}</div>
+      <div><strong>Email:</strong> {{ tenant.email|default:"Not provided" }}</div>
+    </div>
+  </div>
+  <div class="card-footer">
+    <a href="{% url 'tenant_detail' tenant.pk %}" class="btn btn-secondary">Cancel</a>
+    {% if not tenant.has_active_rentals %}
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Yes, Delete Tenant</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

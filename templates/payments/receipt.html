@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Receipt - {{ payment.payment_number }} - RHMS{% endblock %}
+{% block page_title %}Payment Receipt: {{ payment.payment_number }}{% endblock %}
+
+{% block page_actions %}
+<div class="receipt-actions" style="margin: 0;">
+  <button class="btn btn-primary" data-action="print">&#128424; Print Receipt</button>
+  <a href="{% url 'payment_detail' payment.pk %}" class="btn btn-secondary">&larr; Back to Details</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="receipt-wrapper">
+  <div class="receipt-header">
+    <h2>RENT HOUSE MANAGEMENT</h2>
+    <p>Official Rent Payment Receipt</p>
+    <div style="margin-top: 10px; font-weight: 800; font-size: 1.15rem; color: var(--slate-900); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.5px;">
+      {{ payment.payment_number }}
+    </div>
+  </div>
+
+  <div class="receipt-body">
+    <table>
+      <tbody>
+        <tr>
+          <td class="label">Payment No:</td>
+          <td class="val">{{ payment.payment_number }}</td>
+        </tr>
+        <tr>
+          <td class="label">Rental No:</td>
+          <td class="val">{{ rental.rental_number }}</td>
+        </tr>
+        <tr>
+          <td class="label">Tenant:</td>
+          <td class="val">{{ tenant.full_name }}</td>
+        </tr>
+        <tr>
+          <td class="label">Phone:</td>
+          <td class="val">{{ tenant.phone }}</td>
+        </tr>
+        <tr>
+          <td class="label">Property:</td>
+          <td class="val">{{ property.name }}</td>
+        </tr>
+        <tr>
+          <td class="label">Property Location:</td>
+          <td class="val">{{ property.address }}, {{ property.city }}</td>
+        </tr>
+        <tr>
+          <td class="label">Billing Month:</td>
+          <td class="val">{{ charge.billing_month|date:"F Y" }}</td>
+        </tr>
+
+        <tr class="receipt-divider"><td colspan="2"><hr style="border: none; border-top: 1px solid var(--border-color); margin: 8px 0;"></td></tr>
+
+        <tr>
+          <td class="label">Amount Due:</td>
+          <td class="val">${{ charge.amount_due }}</td>
+        </tr>
+        <tr>
+          <td class="label" style="font-weight: 700; color: var(--navy-dark);">Amount Paid:</td>
+          <td class="val" style="font-size: 1.15rem; color: var(--green);">${{ payment.amount }}</td>
+        </tr>
+        <tr>
+          <td class="label" style="font-weight: 700; color: var(--navy-dark);">Outstanding Balance:</td>
+          <td class="val" style="font-size: 1.15rem; color: {% if charge.outstanding_balance > 0 %}var(--red){% else %}var(--green){% endif %};">
+            ${{ charge.outstanding_balance }}
+          </td>
+        </tr>
+
+        <tr class="receipt-divider"><td colspan="2"><hr style="border: none; border-top: 1px solid var(--border-color); margin: 8px 0;"></td></tr>
+
+        <tr>
+          <td class="label">Payment Method:</td>
+          <td class="val">{{ payment.payment_method }}</td>
+        </tr>
+        {% if payment.reference %}
+        <tr>
+          <td class="label">Reference / Tx ID:</td>
+          <td class="val">{{ payment.reference }}</td>
+        </tr>
+        {% endif %}
+        <tr>
+          <td class="label">Payment Date:</td>
+          <td class="val">{{ payment.payment_date|date:"d/m/Y" }}</td>
+        </tr>
+        <tr>
+          <td class="label">Payment Status:</td>
+          <td class="val">
+            {% if charge.payment_status == 'Paid' %}
+              <span class="badge badge-paid">Paid</span>
+            {% elif charge.payment_status == 'Partially Paid' %}
+              <span class="badge badge-partially-paid">Partially Paid</span>
+            {% else %}
+              <span class="badge badge-unpaid">Unpaid</span>
+            {% endif %}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top: 36px; padding-top: 16px; border-top: 1px dashed #cbd5e1; display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted);">
+      <div>
+        <span>Authorized Signature:</span>
+        <div style="border-bottom: 1px solid #94a3b8; width: 140px; margin-top: 25px;"></div>
+      </div>
+      <div style="text-align: right;">
+        <span>Receipt Generated:</span>
+        <div style="margin-top: 25px; font-weight: 600;">{% now "d/m/Y H:i" %}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="receipt-footer">
+    <p>====================================</p>
+    <p style="font-weight: 700; font-size: 1rem; margin: 4px 0; color: var(--navy-dark);">THANK YOU</p>
+    <p>====================================</p>
+  </div>
+</div>
+{% endblock %}

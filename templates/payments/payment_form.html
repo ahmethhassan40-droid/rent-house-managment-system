@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - RHMS{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 700px; margin: 0 auto;">
+  <div class="card-header">
+    <h3>{{ title }}</h3>
+    {% if rental %}
+    <a href="{% url 'rental_detail' rental.pk %}" class="btn btn-secondary btn-sm">&larr; Back to Agreement</a>
+    {% else %}
+    <a href="{% url 'payment_list' %}" class="btn btn-secondary btn-sm">&larr; Back to Payments</a>
+    {% endif %}
+  </div>
+  <form method="post">
+    {% csrf_token %}
+    <div class="card-body">
+      {% if charge %}
+      <div class="alert alert-info" style="margin-bottom: 20px;">
+        <strong>Target Charge:</strong> {{ charge.billing_month|date:"F Y" }} &bull; Amount Due: <strong>${{ charge.amount_due }}</strong> &bull; Outstanding Balance: <strong>${{ charge.outstanding_balance }}</strong>
+      </div>
+      {% endif %}
+
+      {% if form.non_field_errors %}
+      <div class="alert alert-danger">
+        {% for error in form.non_field_errors %}
+          <div>{{ error }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="form-grid">
+        <div class="form-group full-width">
+          <label class="form-label" for="{{ form.rental.id_for_label }}">Rental Agreement <span class="required">*</span></label>
+          {{ form.rental }}
+          {% if form.rental.errors %}<div class="form-error">{{ form.rental.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="form-group full-width">
+          <label class="form-label" for="{{ form.rent_charge.id_for_label }}">Rent Charge (Billing Month) <span class="required">*</span></label>
+          {{ form.rent_charge }}
+          {% if form.rent_charge.errors %}<div class="form-error">{{ form.rent_charge.errors.0 }}</div>{% endif %}
+          <div class="form-help">Select the monthly charge to apply this payment towards.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="{{ form.amount.id_for_label }}">Amount Paid ($ USD) <span class="required">*</span></label>
+          {{ form.amount }}
+          {% if form.amount.errors %}<div class="form-error">{{ form.amount.errors.0 }}</div>{% endif %}
+          <div class="form-help">Cannot exceed remaining balance of the charge.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="{{ form.payment_method.id_for_label }}">Payment Method <span class="required">*</span></label>
+          {{ form.payment_method }}
+          {% if form.payment_method.errors %}<div class="form-error">{{ form.payment_method.errors.0 }}</div>{% endif %}
+          <div class="form-help">Cash, ZAAD, eDahab, Card, Bank</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="{{ form.payment_date.id_for_label }}">Payment Date <span class="required">*</span></label>
+          {{ form.payment_date }}
+          {% if form.payment_date.errors %}<div class="form-error">{{ form.payment_date.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="{{ form.reference.id_for_label }}">Reference / Transaction ID</label>
+          {{ form.reference }}
+          {% if form.reference.errors %}<div class="form-error">{{ form.reference.errors.0 }}</div>{% endif %}
+          <div class="form-help">e.g. ZAAD receipt number or mobile money transaction reference</div>
+        </div>
+
+        <div class="form-group full-width">
+          <label class="form-label" for="{{ form.notes.id_for_label }}">Notes</label>
+          {{ form.notes }}
+          {% if form.notes.errors %}<div class="form-error">{{ form.notes.errors.0 }}</div>{% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="card-footer">
+      {% if rental %}
+      <a href="{% url 'rental_detail' rental.pk %}" class="btn btn-secondary">Cancel</a>
+      {% else %}
+      <a href="{% url 'payment_list' %}" class="btn btn-secondary">Cancel</a>
+      {% endif %}
+      <button type="submit" class="btn btn-success">Save Payment</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - RHMS{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 800px; margin: 0 auto;">
+  <div class="card-header">
+    <h3>{{ title }}</h3>
+    <a href="{% url 'rental_list' %}" class="btn btn-secondary btn-sm">&larr; Back to List</a>
+  </div>
+  <form method="post">
+    {% csrf_token %}
+    <div class="card-body">
+      {% if form.non_field_errors %}
+      <div class="alert alert-danger">
+        {% for error in form.non_field_errors %}
+          <div>{{ error }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label" for="{{ form.property.id_for_label }}">Property <span class="required">*</span></label>
+          {{ form.property }}
+          {% if form.property.errors %}<div class="form-error">{{ form.property.errors.0 }}</div>{% endif %}
+          <div class="form-help">Only Available properties can be selected for new agreements.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="{{ form.tenant.id_for_label }}">Tenant <span class="required">*</span></label>
+          {{ form.tenant }}
+          {% if form.tenant.errors %}<div class="form-error">{{ form.tenant.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="{{ form.monthly_rent.id_for_label }}">Agreed Monthly Rent ($ USD) <span class="required">*</span></label>
+          {{ form.monthly_rent }}
+          {% if form.monthly_rent.errors %}<div class="form-error">{{ form.monthly_rent.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="{{ form.security_deposit.id_for_label }}">Security Deposit ($ USD)</label>
+          {{ form.security_deposit }}
+          {% if form.security_deposit.errors %}<div class="form-error">{{ form.security_deposit.errors.0 }}</div>{% endif %}
+          <div class="form-help">Default is 0.00. Cannot be negative.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="{{ form.start_date.id_for_label }}">Start Date <span class="required">*</span></label>
+          {{ form.start_date }}
+          {% if form.start_date.errors %}<div class="form-error">{{ form.start_date.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="{{ form.end_date.id_for_label }}">End Date (Optional)</label>
+          {{ form.end_date }}
+          {% if form.end_date.errors %}<div class="form-error">{{ form.end_date.errors.0 }}</div>{% endif %}
+          <div class="form-help">Leave empty for open-ended / ongoing rentals.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="{{ form.status.id_for_label }}">Agreement Status <span class="required">*</span></label>
+          {{ form.status }}
+          {% if form.status.errors %}<div class="form-error">{{ form.status.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="form-group full-width">
+          <label class="form-label" for="{{ form.notes.id_for_label }}">Terms & Notes</label>
+          {{ form.notes }}
+          {% if form.notes.errors %}<div class="form-error">{{ form.notes.errors.0 }}</div>{% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="card-footer">
+      <a href="{% url 'rental_list' %}" class="btn btn-secondary">Cancel</a>
+      <button type="submit" class="btn btn-primary">Save Agreement</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

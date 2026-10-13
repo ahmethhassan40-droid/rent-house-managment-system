@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Rent Charges - RHMS{% endblock %}
+{% block page_title %}Monthly Rent Charges{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'rent_charge_create' %}" class="btn btn-primary">
+  + Generate Rent Charge
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Search & Month Filter -->
+<div class="filter-bar">
+  <form method="get" class="filter-form">
+    <div class="filter-group" style="flex: 1; min-width: 240px;">
+      <input type="text" name="q" value="{{ query }}" placeholder="Search by rental no, tenant, property..." style="width: 100%;">
+    </div>
+
+    <div class="filter-group">
+      <label style="font-size: 0.8rem; color: var(--text-muted);">Billing Month:</label>
+      <input type="month" name="month" value="{{ month_filter }}">
+    </div>
+
+    <button type="submit" class="btn btn-secondary btn-sm">Filter</button>
+    {% if query or month_filter %}
+    <a href="{% url 'rent_charge_list' %}" class="btn btn-secondary btn-sm" style="color: var(--text-muted);">Reset</a>
+    {% endif %}
+  </form>
+</div>
+
+<!-- Rent Charges Table -->
+<div class="card">
+  <div class="card-header">
+    <h3>All Generated Rent Charges ({{ page_obj.paginator.count }})</h3>
+  </div>
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Rental No.</th>
+          <th>Property</th>
+          <th>Tenant</th>
+          <th>Billing Month</th>
+          <th>Due Date</th>
+          <th>Amount Due</th>
+          <th>Paid</th>
+          <th>Outstanding</th>
+          <th>Status</th>
+          <th style="text-align: right;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for charge in page_obj %}
+        <tr>
+          <td>
+            <strong><a href="{% url 'rental_detail' charge.rental.pk %}">{{ charge.rental.rental_number }}</a></strong>
+          </td>
+          <td>{{ charge.rental.property.name }}</td>
+          <td>{{ charge.rental.tenant.full_name }}</td>
+          <td><strong>{{ charge.billing_month|date:"F Y" }}</strong></td>
+          <td>{{ charge.due_date|date:"d/m/Y" }}</td>
+          <td>${{ charge.amount_due }}</td>
+          <td style="color: var(--green); font-weight: 600;">${{ charge.total_paid }}</td>
+          <td style="font-weight: 700; color: {% if charge.outstanding_balance > 0 %}var(--red){% else %}var(--green){% endif %};">
+            ${{ charge.outstanding_balance }}
+          </td>
+          <td>
+            {% if charge.payment_status == 'Paid' %}
+              <span class="badge badge-paid">Paid</span>
+            {% elif charge.payment_status == 'Partially Paid' %}
+              <span class="badge badge-partially-paid">Partially Paid</span>
+            {% else %}
+              <span class="badge badge-unpaid">Unpaid</span>
+            {% endif %}
+          </td>
+          <td style="text-align: right;">
+            {% if charge.outstanding_balance > 0 %}
+            <a href="{% url 'payment_create' %}?rental={{ charge.rental.pk }}&charge={{ charge.pk }}" class="btn btn-success btn-sm">
+              Record Payment
+            </a>
+            {% else %}
+            <a href="{% url 'rental_detail' charge.rental.pk %}" class="btn btn-secondary btn-sm">View</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="10">
+            <div class="empty-state">
+              <div class="empty-state-icon">&#128197;</div>
+              <h4>No Rent Charges Found</h4>
+              <p>No monthly charges match your search criteria.</p>
+              <a href="{% url 'rent_charge_create' %}" class="btn btn-primary btn-sm">+ Generate Rent Charge</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {% if page_obj.has_other_pages %}
+  <div class="pagination">
+    <span>Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    <div class="pagination-links">
+      {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}{{ extra_query }}" class="btn btn-secondary btn-sm">&laquo; Previous</a>
+      {% endif %}
+      {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}{{ extra_query }}" class="btn btn-secondary btn-sm">Next &raquo;</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
